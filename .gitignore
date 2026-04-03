@@ -1,0 +1,9 @@
+data/
+*.png
+*.jpg
+*.jpeg
+*.dm4
+*.npy
+*.h5
+*.pt
+__pycache__/
