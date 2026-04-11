@@ -449,12 +449,6 @@ def run_ed_simulation(cif_path, zone_axis=(0,0,1), nphonon=20, pn_seed=123456,fi
 
 if __name__ == "__main__":
     # 这里替换成你的cif文件路径和带轴方向
-<<<<<<< HEAD
     cif_file = ""
-=======
-    cif_file = "/internfs/pengqianwen/stem-crystal-system/single_opinion/Data/MP_cifs_processed/mp-1229204.cif"
-    #cif_file="/internfs/pengqianwen/conventional_si.cif"
-    #cif_file="/internfs/pengqianwen/stem-crystal-system/single_opinion/Data/rFe2O3/r-Fe2O3.cif"
->>>>>>> temp_save
     zone = (2, 1, 1)
     run_ed_simulation(cif_file, zone_axis=zone, nphonon=20)
