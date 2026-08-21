@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>MCP 调试面板</title>
+</head>
+<body>
+<h2>MCP SSE 连接状态</h2>
+<div id="status">等待连接...</div>
+<hr>
+<h3>工具调用测试</h3>
+<button onclick="callTool()">调用 pre_symmetry 工具</button>
+<script>
+const sseUrl = "http://127.0.0.1:50002/sse";
+let sessionId = "";
+
+// 监听SSE
+const es = new EventSource(sseUrl);
+es.addEventListener("endpoint", (e) => {
+    let path = e.data;
+    sessionId = new URLSearchParams(path.split("?")[1]).get("session_id");
+    document.getElementById("status").innerText = `✅ 已连接，session_id: ${sessionId}`;
+});
+
+// 手动调用工具
+async function callTool(){
+    const res = await fetch(`http://127.0.0.1:50002/messages/?session_id=${sessionId}`,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+            jsonrpc:"2.0",
+            id:"1",
+            method:"tools/call",
+            params:{
+                name:"pre_symmetry",
+                parameters:{
+                    top_k:3
+                }
+            }
+        })
+    })
+    const data = await res.json();
+    console.log("返回结果：",data);
+    alert("调用完成，看控制台");
+}
+</script>
+</body>
+</html>
