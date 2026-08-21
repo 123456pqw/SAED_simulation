@@ -16,8 +16,8 @@ import torch.optim as optim
 from torchvision import transforms
 
 from tools.Trainer_2 import ModelNetTrainer
-from tools.ImgDataset_random_aug_v3 import MultiviewImgDataset, SingleImgDataset
-from models.MVCNN_18_a_new import MVCNN, SVCNN
+from tools.ImgDataset_random_aug import MultiviewImgDataset, SingleImgDataset
+from models.MVBCNN import MVBCNN, SVBCNN
 
 
 torch.cuda.empty_cache()
@@ -161,7 +161,7 @@ def split_by_spacegroup(
 # ----------------------------
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-name", "--name", type=str, default="mvcnn_new")
+    parser.add_argument("-name", "--name", type=str, default="mvBCNN_new")
     parser.add_argument("-bs", "--batchSize", type=int, default=16)
     parser.add_argument("-num_two", type=int, default=8)  # 保留参数位
     parser.add_argument("-num_val", type=int, default=2000000)  # 保留参数位
@@ -171,16 +171,16 @@ if __name__ == "__main__":
     parser.add_argument("-lr", type=float, default=5e-5)
     parser.add_argument("-weight_decay", type=float, default=1e-4)
     parser.add_argument("-no_pretraining", dest="no_pretraining", action="store_true")
-    parser.add_argument("-cnn_name", "--cnn_name", type=str, default="resnet14")
+    parser.add_argument("-BCNN_name", "--BCNN_name", type=str, default="resnet14")
     parser.add_argument("-num_views", type=int, default=2)
     parser.add_argument("-test_mode", action="store_true")  # 保留参数位
-    parser.add_argument("-root_dir", type=str, default="/internfs/pengqianwen/MVBCNN/data2")
+    parser.add_argument("-root_dir", type=str, default="")
 
     # 你指定的 CSV
     parser.add_argument(
         "--csv_path",
         type=str,
-        default="/internfs/my/structure/stem2cif-3d-xtalnet/data/mp_50/mp_50_7system_20250710.csv",
+        default="",
     )
 
     args = parser.parse_args()
@@ -190,7 +190,7 @@ if __name__ == "__main__":
     loss_fn_h2 = nn.CrossEntropyLoss()
 
     experiment_id = str(uuid.uuid4())
-    result_root = "/internfs/pengqianwen/MVBCNN/results"
+    result_root = "/internfs/pengqianwen/MVBBCNN/results"
     log_dir = os.path.join(result_root, args.name, experiment_id)
     create_folder(log_dir)
 
@@ -225,14 +225,14 @@ if __name__ == "__main__":
                              std=[0.229, 0.224, 0.225]),
     ])
 
-    # ---------------- STAGE 1 (SVCNN) ----------------
+    # ---------------- STAGE 1 (SVBCNN) ----------------
     stage_1_log_dir = os.path.join(log_dir, "stage_1")
     create_folder(stage_1_log_dir)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("device:", device)
 
-    cnet = SVCNN(args.name, pretraining=pretraining, cnn_name=args.cnn_name)
+    cnet = SVBCNN(args.name, pretraining=pretraining, BCNN_name=args.BCNN_name)
     cnet.to(device)
     if torch.cuda.device_count() > 1:
         cnet = nn.DataParallel(cnet)
@@ -261,16 +261,16 @@ if __name__ == "__main__":
 
     trainer_stage1 = ModelNetTrainer(
         cnet, train_loader, val_loader, optimizer_stage1,
-        loss_fn_h1, loss_fn_h2, "svcnn", stage_1_log_dir,
+        loss_fn_h1, loss_fn_h2, "svBCNN", stage_1_log_dir,
         num_views=1, rate1=args.rate1, rate2=args.rate2, nstop=args.nstop
     )
     trainer_stage1.train(100)
 
-    # ---------------- STAGE 2 (MVCNN) ----------------
+    # ---------------- STAGE 2 (MVBCNN) ----------------
     stage_2_log_dir = os.path.join(log_dir, "stage_2")
     create_folder(stage_2_log_dir)
 
-    cnet_2 = MVCNN(args.name, cnet, cnn_name=args.cnn_name, num_views=args.num_views)
+    cnet_2 = MVBCNN(args.name, cnet, BCNN_name=args.BCNN_name, num_views=args.num_views)
     cnet_2.to(device)
     if torch.cuda.device_count() > 1:
         cnet_2 = nn.DataParallel(cnet_2)
@@ -306,7 +306,7 @@ if __name__ == "__main__":
 
     trainer_stage2 = ModelNetTrainer(
         cnet_2, train_loader, val_loader, optimizer_stage2,
-        loss_fn_h1, loss_fn_h2, "mvcnn", stage_2_log_dir,
+        loss_fn_h1, loss_fn_h2, "mvBCNN", stage_2_log_dir,
         num_views=args.num_views, rate1=args.rate1, rate2=args.rate2, nstop=args.nstop
     )
     trainer_stage2.train(100)
