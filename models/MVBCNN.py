@@ -15,7 +15,7 @@ from torch.nn.parameter import Parameter
 mean = torch.tensor([0.485, 0.456, 0.406], device='cuda')
 std = torch.tensor([0.229, 0.224, 0.225], device='cuda')
 
-csv_file = '/internfs/pengqianwen/MVBBCNN/utils/data.csv'  # 替换为您的 CSV 文件路径
+csv_file = ''  # 替换为您的 CSV 文件路径
 data = pd.read_csv(csv_file)  # 跳过第一行
 classnames = data.iloc[:, 0].tolist()
 
